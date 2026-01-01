@@ -87,4 +87,23 @@
 </script>
 
 </body>
+  <script>
+  async function loadAdminContent() {
+    const { data, error } = await sb
+      .from('site_content')
+      .select('*');
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    data.forEach(item => {
+      const el = document.getElementById(item.key);
+      if (el) el.innerText = item.value;
+    });
+  }
+
+  loadAdminContent();
+</script>
 </html>
