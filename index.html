@@ -116,5 +116,19 @@
       msg.innerHTML = '<div class="success">لینک ورود به ایمیل شما ارسال شد</div>';
     }
   </script>
+  <script>
+  // ✅ هندل لاگین بعد از کلیک روی ایمیل Supabase
+  const sb = window.supabase.createClient(
+    'https://inhzkeenvlyryihmfpnu.supabase.co',
+    'ANON_KEY_خودت'
+  );
+
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN') {
+      console.log('User signed in:', session.user.email);
+      // بعداً اینجا می‌فرستیمش به داشبورد
+    }
+  });
+</script>
 </body>
 </html>
