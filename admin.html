@@ -1,114 +1,48 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-  <meta charset="UTF-8">
-  <title>Admin Panel</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+  const sb = supabase.createClient(
+    'https://inhzkeenvlyryihmfpnu.supabase.co',
+    'ANON_KEY_خودت'
+  );
 
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: #020617;
-      color: #e5e7eb;
-      padding: 20px;
+  async function loadInvestments() {
+    const { data, error } = await sb
+      .from('investments')
+      .select('name,email,amount,created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      alert('خطا در دریافت داده‌ها');
+      console.error(error);
+      return;
     }
 
-    h1 {
-      margin-bottom: 20px;
-    }
+    const tbody = document.getElementById('rows');
+    tbody.innerHTML = '';
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #0f172a;
-      border-radius: 12px;
-      overflow: hidden;
-    }
+    data.forEach(r => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${r.name || '-'}</td>
+          <td>${r.email || '-'}</td>
+          <td>${r.amount || '-'}</td>
+          <td>${new Date(r.created_at).toLocaleString()}</td>
+        </tr>
+      `;
+    });
+  }
 
-    th, td {
-      padding: 12px;
-      font-size: 14px;
-      border-bottom: 1px solid #1e293b;
-    }
+  async function loadSiteContent() {
+    const { data } = await sb
+      .from('site_content')
+      .select('key,value');
 
-    th {
-      background: #020617;
-      color: #93c5fd;
-      text-align: left;
-    }
-  </style>
-</head>
+    data.forEach(item => {
+      const el = document.getElementById(item.key);
+      if (el) el.innerText = item.value;
+    });
+  }
 
-<body>
-
-  <h1 id="admin_title">پنل مدیریت</h1>
-
-  <table>
-    <thead>
-      <tr>
-        <th>نام</th>
-        <th>ایمیل</th>
-        <th>مبلغ (USD)</th>
-        <th>تاریخ</th>
-      </tr>
-    </thead>
-    <tbody id="rows"></tbody>
-  </table>
-
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script>
-    const sb = supabase.createClient(
-      'https://inhzkeenvlyryihmfpnu.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImluaHprZWVudmx5cnlpaG1mcG51Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNjQzMzgsImV4cCI6MjA4Mjg0MDMzOH0.LePtjr_KA_IKQ38RitiMFUlCnb94ZLPsgrmdJcwOVJk'
-    );
-
-    // 🔹 دریافت داده‌های سرمایه‌گذاری
-    async function loadInvestments() {
-      const { data, error } = await sb
-        .from('investments')
-        .select('full_name,email,amount_usd,created_at')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        alert('خطا در دریافت داده‌ها');
-        console.error(error);
-        return;
-      }
-
-      const tbody = document.getElementById('rows');
-      tbody.innerHTML = '';
-
-      data.forEach(r => {
-        tbody.innerHTML += `
-          <tr>
-            <td>${r.full_name || '-'}</td>
-            <td>${r.email || '-'}</td>
-            <td>${r.amount_usd || '-'}</td>
-            <td>${new Date(r.created_at).toLocaleString()}</td>
-          </tr>
-        `;
-      });
-    }
-
-    // 🔹 دریافت محتوای داینامیک سایت (تیترها و ...)
-    async function loadSiteContent() {
-      const { data, error } = await sb
-        .from('site_content')
-        .select('key,value');
-
-      if (error) {
-        console.error(error);
-        return;
-      }
-
-      data.forEach(item => {
-        const el = document.getElementById(item.key);
-        if (el) el.innerText = item.value;
-      });
-    }
-        loadSiteContent();
-  </script>
-
-</body>
-</html>
+  loadSiteContent();
+  loadInvestments();
+</script>
