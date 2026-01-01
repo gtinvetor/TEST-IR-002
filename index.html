@@ -78,6 +78,7 @@
 
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
+    // 🔑 تنظیمات Supabase
     const SUPABASE_URL = 'https://inhzkeenvlyryihmfpnu.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImluaHprZWVudmx5cnlpaG1mcG51Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNjQzMzgsImV4cCI6MjA4Mjg0MDMzOH0.LePtjr_KA_IKQ38RitiMFUlCnb94ZLPsgrmdJcwOVJk';
 
@@ -90,6 +91,7 @@
       const email = document.getElementById('email').value.trim();
       const code = document.getElementById('invite').value.trim();
       const msg = document.getElementById('msg');
+
       msg.innerHTML = '';
 
       if (!email || !code) {
@@ -97,16 +99,23 @@
         return;
       }
 
+      // 1️⃣ بررسی Invite Code از طریق RPC
       const { data, error } = await sb.rpc('check_invite_code', {
-        invite_code: code
+        p_code: code
       });
 
-      if (error || !data) {
+      if (error || !data || data.length === 0 || data[0].is_valid !== true) {
         msg.innerHTML = '<div class="error">کد معرف نامعتبر یا مصرف شده است</div>';
         return;
       }
 
-      const { error: authError } = await sb.auth.signInWithOtp({ email });
+      // 2️⃣ ارسال لینک ورود
+      const { error: authError } = await sb.auth.signInWithOtp({
+        email: email,
+        options: {
+          emailRedirectTo: window.location.origin
+        }
+      });
 
       if (authError) {
         msg.innerHTML = '<div class="error">خطا در ارسال ایمیل</div>';
@@ -115,20 +124,15 @@
 
       msg.innerHTML = '<div class="success">لینک ورود به ایمیل شما ارسال شد</div>';
     }
-  </script>
-  <script>
-  // ✅ هندل لاگین بعد از کلیک روی ایمیل Supabase
-  const sb = window.supabase.createClient(
-    'https://inhzkeenvlyryihmfpnu.supabase.co',
-    'ANON_KEY_خودت'
-  );
 
-  sb.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN') {
-      console.log('User signed in:', session.user.email);
-      // بعداً اینجا می‌فرستیمش به داشبورد
-    }
-  });
-</script>
+    // 3️⃣ تشخیص لاگین موفق بعد از کلیک ایمیل
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        console.log('SIGNED IN:', session.user.email);
+        // اینجا بعداً می‌تونی ریدایرکت کنی به داشبورد
+        // window.location.href = '/dashboard.html';
+      }
+    });
+  </script>
 </body>
 </html>
