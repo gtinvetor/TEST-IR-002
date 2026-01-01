@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #0f172a;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 12px;
+      font-size: 14px;
+      border-bottom: 1px solid #1e293b;
+    }
+    th {
+      background: #020617;
+      color: #93c5fd;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+
+<h1>درخواست‌های سرمایه‌گذاری</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>نام</th>
+      <th>ایمیل</th>
+      <th>مبلغ (USD)</th>
+      <th>تاریخ</th>
+    </tr>
+  </thead>
+  <tbody id="rows"></tbody>
+</table>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+  const sb = supabase.createClient(
+    'https://inhzkeenvlyryihmfpnu.supabase.co',
+    'ANON_KEY_خودت'
+  );
+
+  async function loadData() {
+    const { data, error } = await sb
+      .from('investments')
+      .select('full_name,email,amount_usd,created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      alert('خطا در دریافت داده');
+      return;
+    }
+
+    const tbody = document.getElementById('rows');
+    tbody.innerHTML = '';
+
+    data.forEach(r => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${r.full_name || '-'}</td>
+          <td>${r.email || '-'}</td>
+          <td>${r.amount_usd || '-'}</td>
+          <td>${new Date(r.created_at).toLocaleString()}</td>
+        </tr>
+      `;
+    });
+  }
+
+  loadData();
+</script>
+
+</body>
+</html>
