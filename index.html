@@ -16,6 +16,7 @@
       align-items: center;
       height: 100vh;
     }
+
     .card {
       background: #020617;
       padding: 32px;
@@ -24,8 +25,17 @@
       max-width: 420px;
       box-shadow: 0 20px 40px rgba(0,0,0,.5);
     }
-    h1 { font-size: 20px; margin-bottom: 10px; }
-    p { font-size: 14px; color: #94a3b8; margin-bottom: 20px; }
+
+    h1 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 20px;
+    }
 
     input {
       width: 100%;
@@ -66,73 +76,62 @@
 <body>
   <div class="card">
     <h1>Private Investment Platform</h1>
-    <p>ورود فقط با ایمیل و کد معرف معتبر</p>
+    <p>ثبت درخواست سرمایه‌گذاری (بدون ثبت‌نام)</p>
 
+    <input id="name" type="text" placeholder="نام و نام خانوادگی" />
     <input id="email" type="email" placeholder="Email" />
-    <input id="invite" type="text" placeholder="Invite Code" />
+    <input id="amount" type="number" placeholder="مبلغ (دلار)" />
 
-    <button onclick="login()">ورود / ثبت‌نام</button>
+    <button onclick="submitRequest()">ارسال درخواست</button>
 
     <div id="msg"></div>
   </div>
 
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
-    // 🔑 تنظیمات Supabase
     const SUPABASE_URL = 'https://inhzkeenvlyryihmfpnu.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImluaHprZWVudmx5cnlpaG1mcG51Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyNjQzMzgsImV4cCI6MjA4Mjg0MDMzOH0.LePtjr_KA_IKQ38RitiMFUlCnb94ZLPsgrmdJcwOVJk';
+    const SUPABASE_ANON_KEY = 'ANON_KEY_خودت';
 
     const sb = window.supabase.createClient(
       SUPABASE_URL,
       SUPABASE_ANON_KEY
     );
 
-    async function login() {
+    async function submitRequest() {
+      const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
-      const code = document.getElementById('invite').value.trim();
+      const amount = document.getElementById('amount').value.trim();
       const msg = document.getElementById('msg');
 
       msg.innerHTML = '';
 
-      if (!email || !code) {
-        msg.innerHTML = '<div class="error">ایمیل و کد معرف الزامی است</div>';
+      if (!name || !email || !amount) {
+        msg.innerHTML = '<div class="error">همه فیلدها الزامی است</div>';
         return;
       }
 
-      // 1️⃣ بررسی Invite Code از طریق RPC
-      const { data, error } = await sb.rpc('check_invite_code', {
-        p_code: code
-      });
+      const { error } = await sb
+        .from('investment_requests')
+        .insert([
+          {
+            full_name: name,
+            email: email,
+            amount_usd: Number(amount)
+          }
+        ]);
 
-      if (error || !data || data.length === 0 || data[0].is_valid !== true) {
-        msg.innerHTML = '<div class="error">کد معرف نامعتبر یا مصرف شده است</div>';
+      if (error) {
+        msg.innerHTML = '<div class="error">خطا در ثبت اطلاعات</div>';
+        console.error(error);
         return;
       }
 
-      // 2️⃣ ارسال لینک ورود
-      const { error: authError } = await sb.auth.signInWithOtp({
-        email: email,
-        options: {
-          emailRedirectTo: window.location.origin
-        }
-      });
+      msg.innerHTML = '<div class="success">درخواست شما با موفقیت ثبت شد</div>';
 
-      if (authError) {
-        msg.innerHTML = '<div class="error">خطا در ارسال ایمیل</div>';
-        return;
-      }
-
-      msg.innerHTML = '<div class="success">لینک ورود به ایمیل شما ارسال شد</div>';
+      document.getElementById('name').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('amount').value = '';
     }
-
-    // 3️⃣ تشخیص لاگین موفق بعد از کلیک ایمیل
-    sb.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') {
-        console.log('SIGNED IN:', session.user.email);
-        // اینجا بعداً می‌تونی ریدایرکت کنی به داشبورد
-        // window.location.href = '/dashboard.html';
-      }
-    });
   </script>
 </body>
 </html>
